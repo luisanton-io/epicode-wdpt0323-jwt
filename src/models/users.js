@@ -11,7 +11,15 @@ const UsersSchema = new Schema({
     },
     password: {
         type: String,
-        required: [true, "User password required"],
+        required: function () {
+            return this.googleId ? false : true
+        },
+    },
+    googleId: {
+        type: String,
+        required: function () {
+            return this.password ? false : true
+        },
     },
     // role: {
     //     type: String,

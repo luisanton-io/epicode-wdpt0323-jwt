@@ -3,6 +3,8 @@ import { User } from "../models/users.js"
 import bcrypt from "bcrypt"
 import checkJwt from "../middleware/jwt.js"
 import jwt from "jsonwebtoken"
+import passport from "passport"
+
 const usersRouter = express.Router()
 
 // CRUD - Create, Read, Update, Delete
@@ -17,7 +19,9 @@ usersRouter.post("/", async (req, res) => {
         ...req.body,
         password,
     })
-    res.status(201).json(newUser)
+
+    const { password: _, __v, ...newUserWithoutPassword } = newUser.toObject()
+    res.status(201).json(newUserWithoutPassword)
 })
 // Authentication - Autenticazione
 // il processo di verifica dell'identità di un utente
@@ -43,8 +47,43 @@ usersRouter.post("/session", async (req, res) => {
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" })
 
-    res.status(200).json({ token })
+    res.status(200).json({ userId: user._id, token })
 })
+
+// 3 - Creiamo due nuova rotte per l'autenticazione con Google,
+//     la prima ci serve per ridirigere l'utente verso Google,
+//     la seconda per ricevere la callback (con i dati) da Google
+
+// la prima:
+usersRouter.get(
+    "/oauth-google",
+    passport.authenticate("google", {
+        scope: ["profile", "email"],
+        prompt: "select_account",
+    })
+)
+
+// la seconda:
+usersRouter.get(
+    "/oauth-callback",
+    passport.authenticate("google", {
+        failureRedirect: "/",
+        session: false,
+    }),
+    async (req, res) => {
+        const payload = { id: req.user._id }
+
+        const token = jwt.sign(payload, process.env.JWT_SECRET, {
+            expiresIn: "1h",
+        })
+
+        // 4 - Dopo aver autenticato l'utente con Google, lo reindirizziamo
+        // al frontend che deve gestire i dati nell'URL oltreché nel localStorage
+        res.redirect(
+            `http://localhost:3000?token=${token}&userId=${req.user._id}`
+        )
+    }
+)
 
 // Logout
 // usersRouter.delete("/session", async (req, res) => {})

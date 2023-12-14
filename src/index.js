@@ -9,7 +9,22 @@ import list from "express-list-endpoints"
 
 const app = express()
 
-// app.use(cors())
+const whitelist = [
+    // "https://zippy-macarena.netlify.app/",
+    "http://localhost:3000/",
+]
+
+const corsOptions = {
+    origin: function (origin, next) {
+        if (whitelist.includes(origin) || !origin) {
+            next(null, true)
+        } else {
+            next(new Error("Not allowed by CORS"))
+        }
+    },
+}
+
+app.use(cors(corsOptions))
 
 app.use(express.json())
 

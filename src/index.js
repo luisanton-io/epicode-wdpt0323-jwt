@@ -10,7 +10,7 @@ import list from "express-list-endpoints"
 const app = express()
 
 const whitelist = [
-    // "https://zippy-macarena.netlify.app",
+    "https://zippy-macarena.netlify.app",
     "http://localhost:3000",
 ]
 
